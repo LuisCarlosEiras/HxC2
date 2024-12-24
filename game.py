@@ -60,18 +60,15 @@ class GameState:
 
         movement_range = piece.movement_range
         
-        # Verificar todas as direções possíveis
         for dx in range(-movement_range, movement_range + 1):
             for dy in range(-movement_range, movement_range + 1):
                 new_row = row + dx
                 new_col = col + dy
                 
-                # Verificar se o movimento está dentro do tabuleiro
                 if (0 <= new_row < 9 and 0 <= new_col < 18 and
-                    (dx != 0 or dy != 0) and  # não permanecer na mesma posição
-                    abs(dx) + abs(dy) <= movement_range):  # respeitar o alcance do movimento
+                    (dx != 0 or dy != 0) and
+                    abs(dx) + abs(dy) <= movement_range):
                     
-                    # Verificar se a casa está vazia ou tem um inimigo
                     target = self.board[new_row][new_col]
                     if (target.piece_type == PieceType.EMPTY or 
                         target.army != piece.army):
@@ -84,18 +81,26 @@ class GameState:
             from_row, from_col = from_pos
             to_row, to_col = to_pos
             
-            # Realizar o movimento
             self.board[to_row][to_col] = self.board[from_row][from_col]
             self.board[from_row][from_col] = Piece(PieceType.EMPTY, Army.NONE)
             
-            # Trocar o turno
             self.current_turn = Army.CURIATII if self.current_turn == Army.HORATII else Army.HORATII
             
-            # Limpar seleção
             self.selected_piece = None
             self.valid_moves = []
             return True
         return False
+
+def get_piece_symbol(piece):
+    if piece.piece_type == PieceType.EMPTY:
+        return " "
+    elif piece.piece_type == PieceType.ARCHER:
+        return "🏹"
+    elif piece.piece_type == PieceType.SPEARMAN:
+        return "🗡️"
+    elif piece.piece_type == PieceType.SWORDSMAN:
+        return "⚔️"
+    return " "
 
 def main():
     st.title("Os Horácios e os Curiácios")
@@ -104,64 +109,80 @@ def main():
         st.session_state.game_state = GameState()
     
     game_state = st.session_state.game_state
+
+    # Container para o tabuleiro com estilo CSS personalizado
+    board_container = st.container()
     
-    # Criar o tabuleiro visual
-    for i in range(9):
-        cols = st.columns(18)
-        for j in range(18):
-            piece = game_state.board[i][j]
-            bg_color = '#4f4f4f' if (i + j) % 2 == 0 else '#8f8f8f'
-            
-            # Destacar casas válidas para movimento
-            if (i, j) in game_state.valid_moves:
-                bg_color = '#90EE90'  # Verde claro para movimentos válidos
-            
-            # Destacar peça selecionada
-            if game_state.selected_piece == (i, j):
-                bg_color = '#FFD700'  # Dourado para peça selecionada
-            
-            if piece.piece_type == PieceType.EMPTY:
-                symbol = " "
-            else:
-                symbols = {
-                    PieceType.ARCHER: "🏹",
-                    PieceType.SPEARMAN: "🗡️",
-                    PieceType.SWORDSMAN: "⚔️"
-                }
-                symbol = symbols[piece.piece_type]
-            
-            if piece.army == Army.HORATII:
-                color = "blue"
-            elif piece.army == Army.CURIATII:
-                color = "red"
-            else:
-                color = "white"
-            
-            # Criar botão clicável para cada célula
-            if cols[j].button(symbol, key=f"{i}-{j}", help=f"Posição ({i},{j})"):
-                # Se não há peça selecionada e a célula tem uma peça do jogador atual
-                if (game_state.selected_piece is None and 
-                    piece.piece_type != PieceType.EMPTY and 
-                    piece.army == game_state.current_turn):
-                    game_state.selected_piece = (i, j)
-                    game_state.valid_moves = game_state.get_valid_moves(i, j)
+    with board_container:
+        for i in range(9):
+            cols = st.columns(18)
+            for j in range(18):
+                piece = game_state.board[i][j]
                 
-                # Se há uma peça selecionada, tentar mover para a nova posição
-                elif game_state.selected_piece is not None:
-                    from_pos = game_state.selected_piece
-                    to_pos = (i, j)
-                    if game_state.move_piece(from_pos, to_pos):
+                # Cor do tabuleiro de xadrez
+                is_dark = (i + j) % 2 == 0
+                base_color = '#769656' if is_dark else '#eeeed2'  # Cores de xadrez tradicional
+                
+                # Destacar casas válidas para movimento
+                if (i, j) in game_state.valid_moves:
+                    bg_color = '#baca44'  # Verde mais claro para movimentos válidos
+                elif game_state.selected_piece == (i, j):
+                    bg_color = '#f6f669'  # Amarelo para peça selecionada
+                else:
+                    bg_color = base_color
+                
+                # Cor do texto baseada no exército
+                if piece.army == Army.HORATII:
+                    text_color = "#0000FF"  # Azul
+                elif piece.army == Army.CURIATII:
+                    text_color = "#FF0000"  # Vermelho
+                else:
+                    text_color = "#000000"  # Preto
+                
+                # Símbolo da peça
+                symbol = get_piece_symbol(piece)
+                
+                # Criar botão com estilo personalizado
+                button_style = f"""
+                    <div style="
+                        background-color: {bg_color};
+                        color: {text_color};
+                        width: 40px;
+                        height: 40px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 20px;
+                        border: 1px solid #666;
+                        cursor: pointer;
+                    ">
+                        {symbol}
+                    </div>
+                """
+                
+                if cols[j].button(
+                    symbol,
+                    key=f"{i}-{j}",
+                    help=f"Posição ({i},{j})",
+                    use_container_width=True
+                ):
+                    if (game_state.selected_piece is None and 
+                        piece.piece_type != PieceType.EMPTY and 
+                        piece.army == game_state.current_turn):
+                        game_state.selected_piece = (i, j)
+                        game_state.valid_moves = game_state.get_valid_moves(i, j)
                         st.rerun()
-                    else:
-                        # Se o movimento for inválido, limpar seleção
-                        game_state.selected_piece = None
-                        game_state.valid_moves = []
-                        st.rerun()
-    
-    # Mostrar o turno atual
+                    elif game_state.selected_piece is not None:
+                        if game_state.move_piece(game_state.selected_piece, (i, j)):
+                            st.rerun()
+                        else:
+                            game_state.selected_piece = None
+                            game_state.valid_moves = []
+                            st.rerun()
+
+    # Informações do jogo
     st.write(f"Turno atual: {'Horácios' if game_state.current_turn == Army.HORATII else 'Curiácios'}")
     
-    # Adicionar botão de reiniciar jogo
     if st.button("Reiniciar Jogo"):
         st.session_state.game_state = GameState()
         st.rerun()
