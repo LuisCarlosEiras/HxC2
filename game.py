@@ -33,27 +33,28 @@ class Piece:
 
 class GameState:
     def __init__(self):
-        self.board = [[Piece(PieceType.EMPTY, Army.NONE) for _ in range(18)] for _ in range(9)]
+        # Alterado para 18 x 9
+        self.board = [[Piece(PieceType.EMPTY, Army.NONE) for _ in range(9)] for _ in range(18)]
         self.current_turn = Army.HORATII
         self.initialize_board()
     
     def initialize_board(self):
-        # Configuração inicial dos Horácios (parte superior)
+        # Configuração inicial dos exércitos
         piece_types = [
             [PieceType.ARCHER, PieceType.ARCHER, PieceType.ARCHER],
             [PieceType.SPEARMAN, PieceType.SPEARMAN, PieceType.SPEARMAN],
             [PieceType.SWORDSMAN, PieceType.SWORDSMAN, PieceType.SWORDSMAN]
         ]
         
-        # Posicionar Horácios
+        # Posicionar Horácios (lado esquerdo)
         for i in range(3):
             for j in range(3):
-                self.board[i][7+j] = Piece(piece_types[i][j], Army.HORATII)
+                self.board[7+i][0+j] = Piece(piece_types[i][j], Army.HORATII)
         
-        # Posicionar Curiácios
+        # Posicionar Curiácios (lado direito)
         for i in range(3):
             for j in range(3):
-                self.board[6+i][7+j] = Piece(piece_types[2-i][j], Army.CURIATII)
+                self.board[7+i][6-j] = Piece(piece_types[i][j], Army.CURIATII)
 
 # Interface Streamlit
 def main():
@@ -67,9 +68,9 @@ def main():
     game_state = st.session_state.game_state
     
     # Criar o tabuleiro visual
-    for i in range(9):
-        cols = st.columns(18)
-        for j in range(18):
+    for i in range(18):  # linhas
+        cols = st.columns(9)  # colunas
+        for j in range(9):
             piece = game_state.board[i][j]
             # Definir a cor da célula (alternando cores como num tabuleiro de xadrez)
             bg_color = '#4f4f4f' if (i + j) % 2 == 0 else '#8f8f8f'
@@ -104,6 +105,8 @@ def main():
                     align-items: center;
                     justify-content: center;
                     font-size: 20px;
+                    margin: 0;
+                    padding: 0;
                 ">
                     {symbol}
                 </div>
