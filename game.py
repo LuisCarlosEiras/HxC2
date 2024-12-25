@@ -10,7 +10,6 @@ class GameBoard:
         self.selected_piece = None
 
     def setup_armies(self):
-        # Define as peças com seus emojis e cores
         pieces = {
             'H': {  # Horácios (azul)
                 'S': {'emoji': '⚔️', 'color': '#0000FF'},
@@ -24,26 +23,24 @@ class GameBoard:
             }
         }
 
-        # Formação inicial Horácios (3x3) - topo
         formation_horatii = [
-            ['A', 'A', 'A'],  # Arqueiros atrás
-            ['L', 'L', 'L'],  # Lanceiros no meio
-            ['S', 'S', 'S']   # Espadachins na frente
+            ['A', 'A', 'A'],
+            ['L', 'L', 'L'],
+            ['S', 'S', 'S']
         ]
 
-        # Formação inicial Curiácios (3x3) - base (invertida)
         formation_curiatii = [
-            ['S', 'S', 'S'],  # Espadachins atrás
-            ['L', 'L', 'L'],  # Lanceiros no meio
-            ['A', 'A', 'A']   # Arqueiros na frente
+            ['S', 'S', 'S'],
+            ['L', 'L', 'L'],
+            ['A', 'A', 'A']
         ]
 
-        # Posiciona Horácios (topo)
-        start_row = 0
         start_col = (self.board_size_x - 3) // 2
+        
+        # Posiciona Horácios (topo)
         for i, row in enumerate(formation_horatii):
             for j, piece_type in enumerate(row):
-                self.board[start_row + i][start_col + j] = {
+                self.board[i][start_col + j] = {
                     'team': 'H',
                     'type': piece_type,
                     'emoji': pieces['H'][piece_type]['emoji'],
@@ -51,42 +48,94 @@ class GameBoard:
                 }
 
         # Posiciona Curiácios (base)
-        start_row = 5
         for i, row in enumerate(formation_curiatii):
             for j, piece_type in enumerate(row):
-                self.board[start_row + i][start_col + j] = {
+                self.board[5 + i][start_col + j] = {
                     'team': 'C',
                     'type': piece_type,
                     'emoji': pieces['C'][piece_type]['emoji'],
                     'color': pieces['C'][piece_type]['color']
                 }
 
+def create_board_style():
+    return """
+    <style>
+        .chess-board {
+            border: 2px solid #333;
+            padding: 5px;
+            background-color: #333;
+        }
+        .board-cell {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        .white-cell {
+            background-color: #EEEED2;
+        }
+        .black-cell {
+            background-color: #769656;
+        }
+        .cell-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+    """
+
 def main():
     st.title("Os Horácios e os Curiácios - Protótipo")
     
-    # Inicializa o tabuleiro na sessão
+    # Injetar CSS personalizado
+    st.markdown(create_board_style(), unsafe_allow_html=True)
+    
     if 'game_board' not in st.session_state:
         st.session_state.game_board = GameBoard()
         st.session_state.selected_pos = None
     
-    # Layout com duas colunas
     col1, col2 = st.columns([3, 1])
     
-    # Tabuleiro (coluna 1)
     with col1:
+        # Criar container para o tabuleiro
+        st.markdown('<div class="chess-board">', unsafe_allow_html=True)
+        
+        # Adicionar letras no topo do tabuleiro
+        cols = st.columns(7)
+        for j in range(7):
+            with cols[j]:
+                st.markdown(f"<div style='text-align: center; color: white;'>{chr(65+j)}</div>", unsafe_allow_html=True)
+        
         for i in range(8):
-            cols = st.columns(7)  # Reduzido para 7 colunas
-            for j in range(7):    # Reduzido para 7 colunas
+            cols = st.columns(8)
+            # Número da linha
+            with cols[0]:
+                st.markdown(f"<div style='color: white; width: 20px;'>{8-i}</div>", unsafe_allow_html=True)
+            
+            # Células do tabuleiro
+            for j in range(7):
                 with cols[j]:
-                    cell_color = '#DEB887' if (i + j) % 2 == 0 else '#8B4513'
+                    cell_color = 'white-cell' if (i + j) % 2 == 0 else 'black-cell'
                     piece = st.session_state.game_board.board[i][j]
+                    
+                    st.markdown(
+                        f"""
+                        <div class="board-cell {cell_color}">
+                            <div class="cell-content">
+                        """, 
+                        unsafe_allow_html=True
+                    )
                     
                     if piece:
                         if st.button(
                             piece['emoji'],
                             key=f"cell_{i}_{j}",
-                            help=f"{'Horácio' if piece['team'] == 'H' else 'Curiácio'}",
-                            use_container_width=True
+                            help=f"{'Horácio' if piece['team'] == 'H' else 'Curiácio'}"
                         ):
                             if st.session_state.selected_pos is None:
                                 st.session_state.selected_pos = (i, j)
@@ -97,19 +146,18 @@ def main():
                                 st.session_state.selected_pos = None
                                 st.rerun()
                     else:
-                        if st.button(
-                            " ",
-                            key=f"cell_{i}_{j}",
-                            use_container_width=True
-                        ):
+                        if st.button(" ", key=f"cell_{i}_{j}"):
                             if st.session_state.selected_pos is not None:
                                 old_i, old_j = st.session_state.selected_pos
                                 st.session_state.game_board.board[i][j] = st.session_state.game_board.board[old_i][old_j]
                                 st.session_state.game_board.board[old_i][old_j] = None
                                 st.session_state.selected_pos = None
                                 st.rerun()
+                    
+                    st.markdown("</div></div>", unsafe_allow_html=True)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
     
-    # Legenda e controles (coluna 2)
     with col2:
         st.write("Legenda:")
         
@@ -119,7 +167,7 @@ def main():
         st.write("🗡️ - Lanceiro")
         st.write("🏹 - Arqueiro")
         
-        st.write("") # Espaço em branco
+        st.write("")
         
         # Curiácios (vermelho)
         st.markdown("<div style='color: #FF0000;'>Curiácios:</div>", unsafe_allow_html=True)
@@ -127,9 +175,8 @@ def main():
         st.write("🗡️ - Lanceiro")
         st.write("🏹 - Arqueiro")
         
-        st.write("") # Espaço em branco
+        st.write("")
         
-        # Informações sobre peça selecionada
         if st.session_state.selected_pos is not None:
             i, j = st.session_state.selected_pos
             piece = st.session_state.game_board.board[i][j]
@@ -139,9 +186,8 @@ def main():
                 st.session_state.selected_pos = None
                 st.rerun()
         
-        st.write("") # Espaço em branco
+        st.write("")
         
-        # Botão de reinício abaixo da legenda
         if st.button("🔄 Reiniciar Jogo"):
             st.session_state.game_board = GameBoard()
             st.session_state.selected_pos = None
