@@ -62,6 +62,7 @@ def create_board_html(board):
             background: #333;
             padding: 10px;
             display: inline-block;
+            border-radius: 4px;
         }
         table.chess-board {
             border-collapse: collapse;
@@ -138,7 +139,7 @@ def main():
         # Renderiza o tabuleiro base
         st.markdown(create_board_html(st.session_state.game_board), unsafe_allow_html=True)
         
-        # Adiciona os botões em cada célula
+        # Adiciona os botões em cada célula usando a técnica de sobreposição
         for i in range(8):
             cols = st.columns(7)
             for j, col in enumerate(cols):
