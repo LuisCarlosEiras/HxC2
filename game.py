@@ -44,103 +44,99 @@ class GameBoard:
                         'color': pieces[army][piece_type]['color']
                     }
 
-def main():
-    st.set_page_config(layout="wide")
-    st.title("Os Horácios e os Curiácios - Protótipo")
-
-    # CSS aprimorado para garantir que os guerreiros fiquem dentro das células
-    st.markdown("""
+def create_board_css():
+    return """
     <style>
-        .board {
-            display: table;
+        .chess-board {
             border-collapse: collapse;
             background: #333;
             padding: 10px;
-            margin: 0 auto;
+            margin: auto;
         }
-        .row {
-            display: table-row;
-        }
-        .cell {
-            display: table-cell;
+        .chess-board td {
             width: 60px;
             height: 60px;
             text-align: center;
             vertical-align: middle;
-            position: relative;
+            padding: 0;
         }
-        .white {
+        .white-cell {
             background-color: #f0d9b5;
         }
-        .black {
+        .black-cell {
             background-color: #b58863;
         }
         .coordinate {
             color: white;
+            font-weight: bold;
             padding: 5px;
-            text-align: center;
         }
         .stButton {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            height: 60px;
+            width: 60px;
+            padding: 0 !important;
+            margin: 0 !important;
         }
         .stButton > button {
             width: 100% !important;
             height: 100% !important;
-            background: transparent !important;
-            border: none !important;
             padding: 0 !important;
-            font-size: 30px !important;
-            line-height: 60px !important;
+            border: none !important;
+            background: transparent !important;
+            font-size: 35px !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
         }
-        .piece-blue { color: #0000FF; }
-        .piece-red { color: #FF0000; }
         div[data-testid="column"] {
             padding: 0 !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+        }
+        td {
+            position: relative;
         }
     </style>
-    """, unsafe_allow_html=True)
+    """
 
+def main():
+    st.set_page_config(layout="wide")
+    st.title("Os Horácios e os Curiácios - Protótipo")
+    
     if 'game_board' not in st.session_state:
         st.session_state.game_board = GameBoard()
         st.session_state.selected_pos = None
 
+    st.markdown(create_board_css(), unsafe_allow_html=True)
+
     col1, col2 = st.columns([3, 1])
 
     with col1:
-        # Tabuleiro HTML base
-        board_html = '<div class="board">'
+        # Criar o tabuleiro como uma tabela HTML
+        table_html = '<table class="chess-board"><tr><td></td>'
         
-        # Linha de letras
-        board_html += '<div class="row"><div class="cell coordinate"></div>'
+        # Adicionar letras das colunas
         for j in range(7):
-            board_html += f'<div class="cell coordinate">{chr(65+j)}</div>'
-        board_html += '</div>'
-
-        # Linhas do tabuleiro
-        for i in range(8):
-            board_html += f'<div class="row"><div class="cell coordinate">{8-i}</div>'
-            
-            # Células da linha
-            for j in range(7):
-                cell_color = "white" if (i + j) % 2 == 0 else "black"
-                board_html += f'<div class="cell {cell_color}"></div>'
-            board_html += '</div>'
-        board_html += '</div>'
+            table_html += f'<td class="coordinate">{chr(65+j)}</td>'
+        table_html += '</tr>'
         
-        st.markdown(board_html, unsafe_allow_html=True)
+        st.markdown(table_html, unsafe_allow_html=True)
 
-        # Botões para interação
+        # Criar o tabuleiro linha por linha
         for i in range(8):
             cols = st.columns([0.5] + [1]*7)
+            
+            # Número da linha
+            with cols[0]:
+                st.markdown(f'<div class="coordinate">{8-i}</div>', unsafe_allow_html=True)
+            
+            # Células do tabuleiro
             for j in range(7):
                 with cols[j+1]:
+                    cell_color = "white-cell" if (i + j) % 2 == 0 else "black-cell"
+                    st.markdown(f'<div class="{cell_color}">', unsafe_allow_html=True)
+                    
                     piece = st.session_state.game_board.board[i][j]
                     if piece:
                         if st.button(piece['emoji'], key=f"cell_{i}_{j}"):
@@ -160,6 +156,8 @@ def main():
                                 st.session_state.game_board.board[old_i][old_j] = None
                                 st.session_state.selected_pos = None
                                 st.rerun()
+                    
+                    st.markdown('</div>', unsafe_allow_html=True)
 
     with col2:
         st.write("Legenda:")
