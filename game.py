@@ -56,36 +56,26 @@ class GameBoard:
                     'emoji': pieces['C'][piece_type]['emoji'],
                     'color': pieces['C'][piece_type]['color']
                 }
-
+#--------------------------------
 def main():
     st.title("Os Horácios e os Curiácios - Protótipo")
 
     # Estilos CSS para o tabuleiro
     st.markdown("""
         <style>
-            .chess-board {
-                border: 2px solid #333;
+            .board {
                 display: inline-block;
-                padding: 10px;
                 background: #333;
-            }
-            .board-row {
-                display: flex;
-                align-items: center;
-            }
-            .row-number {
-                color: white;
-                width: 20px;
-                margin-right: 10px;
+                padding: 10px;
+                border: 2px solid #333;
             }
             .cell {
                 width: 60px;
                 height: 60px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
+                display: inline-block;
                 margin: 0;
                 padding: 0;
+                vertical-align: top;
             }
             .white {
                 background-color: #f0d9b5;
@@ -93,39 +83,28 @@ def main():
             .black {
                 background-color: #b58863;
             }
-            .piece-button {
-                width: 100%;
-                height: 100%;
-                border: none;
-                background: none;
-                font-size: 40px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 0;
-                margin: 0;
-                cursor: pointer;
-            }
-            .piece-button:hover {
-                background-color: rgba(255, 255, 0, 0.3);
-            }
-            .board-letters {
-                display: flex;
-                justify-content: center;
+            .row-label {
                 color: white;
-                margin-top: 5px;
+                display: inline-block;
+                width: 20px;
+                margin-right: 5px;
             }
-            .letter {
-                width: 60px;
+            .col-labels {
+                color: white;
                 text-align: center;
+                margin: 5px 0;
+                padding-left: 25px;
             }
-            .stButton>button {
+            .col-label {
+                display: inline-block;
                 width: 60px;
-                height: 60px;
+            }
+            .stButton > button {
+                width: 60px !important;
+                height: 60px !important;
                 padding: 0 !important;
                 border: none !important;
                 background: transparent !important;
-                color: inherit !important;
             }
         </style>
     """, unsafe_allow_html=True)
@@ -137,26 +116,27 @@ def main():
     col1, col2 = st.columns([3, 1])
 
     with col1:
-        st.markdown('<div class="chess-board">', unsafe_allow_html=True)
+        # Início do tabuleiro
+        st.markdown('<div class="board">', unsafe_allow_html=True)
         
-        # Letras do tabuleiro
-        st.markdown('<div class="board-letters">' + 
-                   ''.join([f'<div class="letter">{chr(65+i)}</div>' for i in range(7)]) + 
-                   '</div>', unsafe_allow_html=True)
+        # Letras das colunas (A-G)
+        col_labels = ''.join([f'<span class="col-label">{chr(65+i)}</span>' for i in range(7)])
+        st.markdown(f'<div class="col-labels">{col_labels}</div>', unsafe_allow_html=True)
         
         # Tabuleiro
         for i in range(8):
-            st.markdown(f'<div class="board-row">', unsafe_allow_html=True)
-            st.markdown(f'<div class="row-number">{8-i}</div>', unsafe_allow_html=True)
+            # Número da linha
+            st.markdown(f'<div><span class="row-label">{8-i}</span>', unsafe_allow_html=True)
             
+            # Células da linha
             for j in range(7):
                 cell_color = "white" if (i + j) % 2 == 0 else "black"
                 piece = st.session_state.game_board.board[i][j]
-
-                st.markdown(f'<div class="cell {cell_color}">', unsafe_allow_html=True)
                 
+                st.markdown(f'<span class="cell {cell_color}">', unsafe_allow_html=True)
                 if piece:
-                    if st.button(piece['emoji'], key=f"cell_{i}_{j}", 
+                    if st.button(piece['emoji'], 
+                               key=f"cell_{i}_{j}",
                                help=f"{'Horácio' if piece['team'] == 'H' else 'Curiácio'}"):
                         if st.session_state.selected_pos is None:
                             st.session_state.selected_pos = (i, j)
@@ -174,13 +154,13 @@ def main():
                             st.session_state.game_board.board[old_i][old_j] = None
                             st.session_state.selected_pos = None
                             st.rerun()
-                
-                st.markdown('</div>', unsafe_allow_html=True)
+                st.markdown('</span>', unsafe_allow_html=True)
             
             st.markdown('</div>', unsafe_allow_html=True)
         
         st.markdown('</div>', unsafe_allow_html=True)
 
+    # Coluna da legenda (mantém o mesmo código)
     with col2:
         st.write("Legenda:")
         
@@ -204,7 +184,8 @@ def main():
             i, j = st.session_state.selected_pos
             piece = st.session_state.game_board.board[i][j]
             st.write("\nPeça selecionada:")
-            st.markdown(f"<p style='color: {piece['color']};'>{'Horácio' if piece['team'] == 'H' else 'Curiácio'} {piece['emoji']}</p>", unsafe_allow_html=True)
+            st.markdown(f"<p style='color: {piece['color']};'>{'Horácio' if piece['team'] == 'H' else 'Curiácio'} {piece['emoji']}</p>", 
+                      unsafe_allow_html=True)
             if st.button("❌ Cancelar seleção"):
                 st.session_state.selected_pos = None
                 st.rerun()
