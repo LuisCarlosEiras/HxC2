@@ -59,16 +59,14 @@ def create_board_html(board):
     css = """
     <style>
         .board-container {
-            background: #333;
-            padding: 10px;
             display: inline-block;
+            padding: 10px;
             border-radius: 4px;
         }
         table.chess-board {
             border-collapse: collapse;
             border-spacing: 0;
-            margin: 0;
-            padding: 0;
+            margin: 0 auto;
         }
         .chess-board th, .chess-board td {
             width: 60px;
@@ -95,13 +93,13 @@ def create_board_html(board):
             height: 100%;
             border: none;
             background: none;
-            cursor: pointer;
             font-size: 40px;
             padding: 0;
             margin: 0;
             display: flex;
             align-items: center;
             justify-content: center;
+            cursor: pointer;
         }
     </style>
     """
@@ -121,10 +119,10 @@ def create_board_html(board):
             cell_color = 'white-cell' if (row + col) % 2 == 0 else 'black-cell'
             piece = board[row][col]
             if piece:
-                button_html = f'<button class="piece-button">{piece["emoji"]}</button>'
+                button_html = f'<button class="piece-button" onclick="handleClick({row}, {col})">{piece["emoji"]}</button>'
             else:
-                button_html = '<button class="piece-button"></button>'
-            html += f'<td class="{cell_color}">{button_html}</td>'
+                button_html = f'<button class="piece-button" onclick="handleClick({row}, {col})"></button>'
+            html += f'<td class="{cell_color}" id="cell_{row}_{col}">{button_html}</td>'
         html += '</tr>'
     html += '</table></div>'
     
@@ -141,33 +139,22 @@ def main():
     col1, col2 = st.columns([3, 1])
 
     with col1:
-        # Renderiza o tabuleiro base
+        # Renderiza o tabuleiro base e adiciona a funcionalidade de movimentação
         st.markdown(create_board_html(st.session_state.game_board.board), unsafe_allow_html=True)
         
         # Adiciona os botões em cada célula
         for i in range(8):
-            cols = st.columns(7)
-            for j, col in enumerate(cols):
-                with col:
-                    piece = st.session_state.game_board.board[i][j]
-                    if piece:
-                        if st.button(piece['emoji'], key=f"cell_{i}_{j}"):
-                            if st.session_state.selected_pos is None:
-                                st.session_state.selected_pos = (i, j)
-                            else:
-                                old_i, old_j = st.session_state.selected_pos
-                                st.session_state.game_board.board[i][j] = st.session_state.game_board.board[old_i][old_j]
-                                st.session_state.game_board.board[old_i][old_j] = None
-                                st.session_state.selected_pos = None
-                                st.rerun()
+            for j in range(7):
+                piece = st.session_state.game_board.board[i][j]
+                if st.button(piece['emoji'] if piece else " ", key=f"cell_{i}_{j}"):
+                    if st.session_state.selected_pos is None:
+                        st.session_state.selected_pos = (i, j)
                     else:
-                        if st.button(" ", key=f"cell_{i}_{j}"):
-                            if st.session_state.selected_pos is not None:
-                                old_i, old_j = st.session_state.selected_pos
-                                st.session_state.game_board.board[i][j] = st.session_state.game_board.board[old_i][old_j]
-                                st.session_state.game_board.board[old_i][old_j] = None
-                                st.session_state.selected_pos = None
-                                st.rerun()
+                        old_i, old_j = st.session_state.selected_pos
+                        st.session_state.game_board.board[i][j] = st.session_state.game_board.board[old_i][old_j]
+                        st.session_state.game_board.board[old_i][old_j] = None
+                        st.session_state.selected_pos = None
+                        st.rerun()
 
     with col2:
         st.write("Legenda:")
