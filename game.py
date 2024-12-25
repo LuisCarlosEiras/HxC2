@@ -1,5 +1,6 @@
 import streamlit as st
-import copy
+import altair as alt
+import pandas as pd
 
 class GameBoard:
     def __init__(self):
@@ -145,29 +146,32 @@ def main():
         # Renderiza o tabuleiro base
         st.markdown(create_board_html(st.session_state.game_board.board), unsafe_allow_html=True)
         
-        # Adiciona os botões em cada célula usando a técnica de sobreposição
+        # Crie um DataFrame para representar o tabuleiro
+        df = pd.DataFrame({
+            'x': range(7),
+            'y': range(8),
+            'piece': [None] * 56
+        })
+
+        # Adicione as peças ao DataFrame
         for i in range(8):
             for j in range(7):
                 piece = st.session_state.game_board.board[i][j]
                 if piece:
-                    if st.button(piece['emoji'], key=f"cell_{i}_{j}", 
-                               help=f"{'Horácio' if piece['team'] == 'H' else 'Curiácio'}"):
-                        if st.session_state.selected_pos is None:
-                            st.session_state.selected_pos = (i, j)
-                        else:
-                            old_i, old_j = st.session_state.selected_pos
-                            st.session_state.game_board.board[i][j] = st.session_state.game_board.board[old_i][old_j]
-                            st.session_state.game_board.board[old_i][old_j] = None
-                            st.session_state.selected_pos = None
-                            st.rerun()
-                else:
-                    if st.button(" ", key=f"cell_{i}_{j}"):
-                        if st.session_state.selected_pos is not None:
-                            old_i, old_j = st.session_state.selected_pos
-                            st.session_state.game_board.board[i][j] = st.session_state.game_board.board[old_i][old_j]
-                            st.session_state.game_board.board[old_i][old_j] = None
-                            st.session_state.selected_pos = None
-                            st.rerun()
+                    df.loc[(i, j), 'piece'] = piece['emoji']
+
+        # Crie um gráfico com o tabuleiro
+        chart = alt.Chart(df).mark_square().encode(
+            x='x',
+            y='y',
+            color='piece'
+        )
+
+        # Adicione um evento de clique ao gráfico
+        chart.on('click', handle_click)
+
+        # Renderize o gráfico
+        st.altair_chart(chart, use_container_width=True)
 
     with col2:
         st.write("Legenda:")
@@ -201,13 +205,6 @@ def main():
             st.session_state.game_board = GameBoard()
             st.session_state.selected_pos = None
             st.rerun()
-
-    # Adiciona um evento de clique ao botão que representa a peça
-    for i in range(8):
-        for j in range(7):
-            piece = st.session_state.game_board.board[i][j]
-            if piece:
-                st.session_state.game_board.board[i][j].on_click = lambda i=i, j=j: handle_click(i, j)
 
 def handle_click(i, j):
     if st.session_state.selected_pos is not None:
