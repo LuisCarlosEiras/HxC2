@@ -67,14 +67,21 @@ def create_board_css():
         .board-row {
             display: flex;
             align-items: center;
+            height: 60px;
+            margin: 0;
+            padding: 0;
+            font-size: 0; /* Remove espaço entre elementos inline */
         }
         .cell {
             width: 60px;
             height: 60px;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
             position: relative;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
         .white {
             background-color: #f0d9b5;
@@ -87,6 +94,7 @@ def create_board_css():
             width: 30px;
             text-align: center;
             font-weight: bold;
+            font-size: 16px; /* Restaura o tamanho da fonte para coordenadas */
         }
         .stButton > button {
             width: 60px !important;
@@ -101,13 +109,21 @@ def create_board_css():
             align-items: center !important;
             justify-content: center !important;
             padding: 0 !important;
+            margin: 0 !important;
         }
         div[data-testid="column"] {
             padding: 0 !important;
+            margin: 0 !important;
+            font-size: 0; /* Remove espaço entre colunas */
+        }
+        /* Remove espaçamento entre linhas */
+        div[data-testid="stHorizontalBlock"] {
+            gap: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
         }
     </style>
     """
-
 def main():
     st.set_page_config(layout="wide")
     st.title("Os Horácios e os Curiácios - Protótipo")
