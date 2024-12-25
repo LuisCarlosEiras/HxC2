@@ -56,11 +56,11 @@ class GameBoard:
                     'emoji': pieces['C'][piece_type]['emoji'],
                     'color': pieces['C'][piece_type]['color']
                 }
-
+# -----------------------------
 def main():
     st.title("Os Horácios e os Curiácios - Protótipo")
 
-    # Estilos CSS para o tabuleiro
+    # Estilos CSS atualizados para centralizar os guerreiros nas casas
     st.markdown("""
         <style>
             .board-wrapper {
@@ -83,6 +83,7 @@ def main():
                 align-items: center;
                 justify-content: center;
                 font-size: 30px;
+                position: relative;
             }
             .white {
                 background-color: #f0d9b5;
@@ -90,16 +91,33 @@ def main():
             .black {
                 background-color: #b58863;
             }
-            .stButton button {
+            .stButton {
+                position: absolute;
                 width: 100%;
                 height: 100%;
-                background: transparent;
-                border: none;
-                color: inherit;
+            }
+            .stButton > button {
+                width: 100% !important;
+                height: 100% !important;
+                background: transparent !important;
+                border: none !important;
+                color: inherit !important;
+                padding: 0 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+            .stButton > button:hover {
+                background: rgba(255, 255, 255, 0.2) !important;
+            }
+            .stButton > button:focus {
+                box-shadow: none !important;
             }
         </style>
     """, unsafe_allow_html=True)
 
+    # Resto do código permanece o mesmo...
+# ------------------
     if 'game_board' not in st.session_state:
         st.session_state.game_board = GameBoard()
         st.session_state.selected_pos = None
