@@ -59,16 +59,10 @@ def create_board_html(board):
     css = """
     <style>
         .board-container {
-            background: #333;
-            padding: 10px;
             display: inline-block;
-            border-radius: 4px;
         }
         table.chess-board {
             border-collapse: collapse;
-            border-spacing: 0;
-            margin: 0;
-            padding: 0;
         }
         .chess-board th, .chess-board td {
             width: 60px;
@@ -77,7 +71,6 @@ def create_board_html(board):
             margin: 0;
             text-align: center;
             vertical-align: middle;
-            border: none;
         }
         .chess-board th {
             color: white;
@@ -95,7 +88,6 @@ def create_board_html(board):
             height: 100%;
             border: none;
             background: none;
-            cursor: pointer;
             font-size: 40px;
             padding: 0;
             margin: 0;
@@ -119,13 +111,7 @@ def create_board_html(board):
         html += f'<tr><th>{8 - row}</th>'
         for col in range(7):
             cell_color = 'white-cell' if (row + col) % 2 == 0 else 'black-cell'
-            piece = board[row][col]
-            button_id = f"btn_{row}_{col}"
-            if piece:
-                button_html = f'<button class="piece-button" id="{button_id}" onclick="handleClick({row}, {col})">{piece["emoji"]}</button>'
-            else:
-                button_html = f'<button class="piece-button" id="{button_id}" onclick="handleClick({row}, {col})"></button>'
-            html += f'<td class="{cell_color}">{button_html}</td>'
+            html += f'<td class="{cell_color}" id="cell_{row}_{col}"></td>'
         html += '</tr>'
     html += '</table></div>'
     
@@ -145,29 +131,30 @@ def main():
         # Renderiza o tabuleiro base
         st.markdown(create_board_html(st.session_state.game_board.board), unsafe_allow_html=True)
         
-        # Adiciona os botões em cada célula usando a técnica de sobreposição
+        # Adiciona os botões em cada célula
         for i in range(8):
-            for j in range(7):
-                piece = st.session_state.game_board.board[i][j]
-                if piece:
-                    if st.button(piece['emoji'], key=f"cell_{i}_{j}", 
-                               help=f"{'Horácio' if piece['team'] == 'H' else 'Curiácio'}"):
-                        if st.session_state.selected_pos is None:
-                            st.session_state.selected_pos = (i, j)
-                        else:
-                            old_i, old_j = st.session_state.selected_pos
-                            st.session_state.game_board.board[i][j] = st.session_state.game_board.board[old_i][old_j]
-                            st.session_state.game_board.board[old_i][old_j] = None
-                            st.session_state.selected_pos = None
-                            st.rerun()
-                else:
-                    if st.button(" ", key=f"cell_{i}_{j}"):
-                        if st.session_state.selected_pos is not None:
-                            old_i, old_j = st.session_state.selected_pos
-                            st.session_state.game_board.board[i][j] = st.session_state.game_board.board[old_i][old_j]
-                            st.session_state.game_board.board[old_i][old_j] = None
-                            st.session_state.selected_pos = None
-                            st.rerun()
+            cols = st.columns(7)
+            for j, col in enumerate(cols):
+                with col:
+                    piece = st.session_state.game_board.board[i][j]
+                    if piece:
+                        if st.button(piece['emoji'], key=f"cell_{i}_{j}"):
+                            if st.session_state.selected_pos is None:
+                                st.session_state.selected_pos = (i, j)
+                            else:
+                                old_i, old_j = st.session_state.selected_pos
+                                st.session_state.game_board.board[i][j] = st.session_state.game_board.board[old_i][old_j]
+                                st.session_state.game_board.board[old_i][old_j] = None
+                                st.session_state.selected_pos = None
+                                st.rerun()
+                    else:
+                        if st.button(" ", key=f"cell_{i}_{j}"):
+                            if st.session_state.selected_pos is not None:
+                                old_i, old_j = st.session_state.selected_pos
+                                st.session_state.game_board.board[i][j] = st.session_state.game_board.board[old_i][old_j]
+                                st.session_state.game_board.board[old_i][old_j] = None
+                                st.session_state.selected_pos = None
+                                st.rerun()
 
     with col2:
         st.write("Legenda:")
