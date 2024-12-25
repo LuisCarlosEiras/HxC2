@@ -120,10 +120,11 @@ def create_board_html(board):
         for col in range(7):
             cell_color = 'white-cell' if (row + col) % 2 == 0 else 'black-cell'
             piece = board[row][col]
+            button_id = f"btn_{row}_{col}"
             if piece:
-                button_html = f'<button class="piece-button" id="btn_{row}_{col}" onclick="handleClick({row}, {col})">{piece["emoji"]}</button>'
+                button_html = f'<button class="piece-button" id="{button_id}" onclick="handleClick({row}, {col})">{piece["emoji"]}</button>'
             else:
-                button_html = '<button class="piece-button" id="btn_{row}_{col}" onclick="handleClick({row}, {col})"></button>'
+                button_html = f'<button class="piece-button" id="{button_id}" onclick="handleClick({row}, {col})"></button>'
             html += f'<td class="{cell_color}">{button_html}</td>'
         html += '</tr>'
     html += '</table></div>'
