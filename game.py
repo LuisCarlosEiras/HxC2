@@ -2,64 +2,65 @@
 import streamlit as st
 import numpy as np
 
-class GamePiece:
-    def __init__(self, team, piece_type):
-        self.team = team  # 'H' for Horatii, 'C' for Curiatii
-        self.piece_type = piece_type
-        self.emoji = self.get_emoji()
-    
-    def get_emoji(self):
-        emoji_map = {
-            ('H', 'S'): '⚔️',  # Horatii Swordsman
-            ('H', 'L'): '🗡️',  # Horatii Spearman
-            ('H', 'A'): '🏹',  # Horatii Archer
-            ('C', 'S'): '⚔️',  # Curiatii Swordsman
-            ('C', 'L'): '🗡️',  # Curiatii Spearman
-            ('C', 'A'): '🏹',  # Curiatii Archer
-        }
-        return emoji_map.get((self.team, self.piece_type))
-
 class GameBoard:
     def __init__(self):
         self.board_size = 8
         self.board = [[None for _ in range(self.board_size)] for _ in range(self.board_size)]
         self.setup_armies()
         self.selected_piece = None
-    
-    def setup_armies(self):
-        # Setup formations
-        formations = {
-            'H': (0, [  # Horatii at top
-                ['A', 'A', 'A'],
-                ['L', 'L', 'L'],
-                ['S', 'S', 'S']
-            ]),
-            'C': (5, [  # Curiatii at bottom
-                ['A', 'A', 'A'],
-                ['L', 'L', 'L'],
-                ['S', 'S', 'S']
-            ])
-        }
-        
-        for team, (start_row, formation) in formations.items():
-            start_col = (self.board_size - 3) // 2
-            for i, row in enumerate(formation):
-                for j, piece_type in enumerate(row):
-                    self.board[start_row + i][start_col + j] = GamePiece(team, piece_type)
 
-# app.py
-import streamlit as st
-from game import GameBoard
+    def setup_armies(self):
+        # Define as peças com seus emojis
+        pieces = {
+            'H': {  # Horácios (azul)
+                'S': '⚔️',  # Espadachim
+                'L': '🗡️',  # Lanceiro
+                'A': '🏹'   # Arqueiro
+            },
+            'C': {  # Curiácios (vermelho)
+                'S': '⚔️',  # Espadachim
+                'L': '🗡️',  # Lanceiro
+                'A': '🏹'   # Arqueiro
+            }
+        }
+
+        # Formação inicial (3x3)
+        formation = [
+            ['A', 'A', 'A'],  # Arqueiros atrás
+            ['L', 'L', 'L'],  # Lanceiros no meio
+            ['S', 'S', 'S']   # Espadachins na frente
+        ]
+
+        # Posiciona Horácios (topo)
+        start_row = 0
+        start_col = (self.board_size - 3) // 2
+        for i, row in enumerate(formation):
+            for j, piece_type in enumerate(row):
+                self.board[start_row + i][start_col + j] = {
+                    'team': 'H',
+                    'type': piece_type,
+                    'emoji': pieces['H'][piece_type]
+                }
+
+        # Posiciona Curiácios (base)
+        start_row = 5
+        for i, row in enumerate(formation):
+            for j, piece_type in enumerate(row):
+                self.board[start_row + i][start_col + j] = {
+                    'team': 'C',
+                    'type': piece_type,
+                    'emoji': pieces['C'][piece_type]
+                }
 
 def main():
     st.title("Os Horácios e os Curiácios - Protótipo")
     
-    # Initialize game board in session state
+    # Inicializa o tabuleiro na sessão
     if 'game_board' not in st.session_state:
         st.session_state.game_board = GameBoard()
         st.session_state.selected_pos = None
     
-    # Create a grid display
+    # Cria o display do tabuleiro
     col1, col2 = st.columns([3, 1])
     
     with col1:
@@ -70,19 +71,16 @@ def main():
                     cell_color = '#FFFFFF' if (i + j) % 2 == 0 else '#A9A9A9'
                     piece = st.session_state.game_board.board[i][j]
                     
-                    # Create clickable button for each cell
                     if piece:
-                        text_color = '#0000FF' if piece.team == 'H' else '#FF0000'
+                        text_color = '#0000FF' if piece['team'] == 'H' else '#FF0000'
                         if st.button(
-                            piece.emoji,
+                            piece['emoji'],
                             key=f"cell_{i}_{j}",
-                            help=f"{'Horácio' if piece.team == 'H' else 'Curiácio'}"
+                            help=f"{'Horácio' if piece['team'] == 'H' else 'Curiácio'}"
                         ):
                             if st.session_state.selected_pos is None:
-                                # Select piece
                                 st.session_state.selected_pos = (i, j)
                             else:
-                                # Move piece
                                 old_i, old_j = st.session_state.selected_pos
                                 st.session_state.game_board.board[i][j] = st.session_state.game_board.board[old_i][old_j]
                                 st.session_state.game_board.board[old_i][old_j] = None
@@ -90,11 +88,10 @@ def main():
                                 st.rerun()
                     else:
                         if st.button(
-                            "　",  # Empty space
+                            "　",  # Espaço vazio
                             key=f"cell_{i}_{j}"
                         ):
                             if st.session_state.selected_pos is not None:
-                                # Move piece to empty cell
                                 old_i, old_j = st.session_state.selected_pos
                                 st.session_state.game_board.board[i][j] = st.session_state.game_board.board[old_i][old_j]
                                 st.session_state.game_board.board[old_i][old_j] = None
@@ -113,7 +110,7 @@ def main():
             i, j = st.session_state.selected_pos
             piece = st.session_state.game_board.board[i][j]
             st.write("\nPeça selecionada:")
-            st.write(f"{'Horácio' if piece.team == 'H' else 'Curiácio'} {piece.emoji}")
+            st.write(f"{'Horácio' if piece['team'] == 'H' else 'Curiácio'} {piece['emoji']}")
             if st.button("Cancelar seleção"):
                 st.session_state.selected_pos = None
                 st.rerun()
