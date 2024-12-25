@@ -1,6 +1,4 @@
 import streamlit as st
-import altair as alt
-import pandas as pd
 
 class GameBoard:
     def __init__(self):
@@ -98,4 +96,111 @@ def create_board_html(board):
             border: none;
             background: none;
             cursor: pointer;
-            font-size:
+            font-size: 40px;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+    """
+
+    html = css + '<div class="board-container"><table class="chess-board">'
+    
+    # Adiciona cabeçalho com letras
+    html += '<tr><th></th>'
+    for col in range(7):
+        html += f'<th>{chr(65 + col)}</th>'
+    html += '</tr>'
+    
+    # Adiciona linhas do tabuleiro
+    for row in range(8):
+        html += f'<tr><th>{8 - row}</th>'
+        for col in range(7):
+            cell_color = 'white-cell' if (row + col) % 2 == 0 else 'black-cell'
+            piece = board[row][col]
+            if piece:
+                button_html = f'<button class="piece-button">{piece["emoji"]}</button>'
+            else:
+                button_html = '<button class="piece-button"></button>'
+            html += f'<td class="{cell_color}">{button_html}</td>'
+        html += '</tr>'
+    html += '</table></div>'
+    
+    return html
+
+def main():
+    st.set_page_config(layout="wide")
+    st.title("Os Horácios e os Curiácios - Protótipo")
+    
+    if 'game_board' not in st.session_state:
+        st.session_state.game_board = GameBoard()
+        st.session_state.selected_pos = None
+
+    col1, col2 = st.columns([3, 1])
+
+    with col1:
+        # Renderiza o tabuleiro base
+        st.markdown(create_board_html(st.session_state.game_board.board), unsafe_allow_html=True)
+        
+        # Adiciona os botões em cada célula
+        for i in range(8):
+            cols = st.columns(7)
+            for j, col in enumerate(cols):
+                with col:
+                    piece = st.session_state.game_board.board[i][j]
+                    if piece:
+                        if st.button(piece['emoji'], key=f"cell_{i}_{j}"):
+                            if st.session_state.selected_pos is None:
+                                st.session_state.selected_pos = (i, j)
+                            else:
+                                old_i, old_j = st.session_state.selected_pos
+                                st.session_state.game_board.board[i][j] = st.session_state.game_board.board[old_i][old_j]
+                                st.session_state.game_board.board[old_i][old_j] = None
+                                st.session_state.selected_pos = None
+                                st.rerun()
+                    else:
+                        if st.button(" ", key=f"cell_{i}_{j}"):
+                            if st.session_state.selected_pos is not None:
+                                old_i, old_j = st.session_state.selected_pos
+                                st.session_state.game_board.board[i][j] = st.session_state.game_board.board[old_i][old_j]
+                                st.session_state.game_board.board[old_i][old_j] = None
+                                st.session_state.selected_pos = None
+                                st.rerun()
+
+    with col2:
+        st.write("Legenda:")
+        
+        st.markdown("<div style='color: #0000FF;'>Horácios:</div>", unsafe_allow_html=True)
+        st.write("⚔️ - Espadachim")
+        st.write("🗡️ - Lanceiro")
+        st.write("🏹 - Arqueiro")
+        
+        st.write("")
+        
+        st.markdown("<div style='color: #FF0000;'>Curiácios:</div>", unsafe_allow_html=True)
+        st.write("⚔️ - Espadachim")
+        st.write("🗡️ - Lanceiro")
+        st.write("🏹 - Arqueiro")
+        
+        if st.session_state.selected_pos is not None:
+            i, j = st.session_state.selected_pos
+            piece = st.session_state.game_board.board[i][j]
+            st.write("\nPeça selecionada:")
+            st.markdown(
+                f"<p style='color: {piece['color']};'>"
+                f"{'Horácio' if piece['team'] == 'H' else 'Curiácio'} {piece['emoji']}</p>",
+                unsafe_allow_html=True
+            )
+            if st.button("❌ Cancelar seleção"):
+                st.session_state.selected_pos = None
+                st.rerun()
+
+        if st.button("🔄 Reiniciar Jogo"):
+            st.session_state.game_board = GameBoard()
+            st.session_state.selected_pos = None
+            st.rerun()
+
+if __name__ == "__main__":
+    main()
