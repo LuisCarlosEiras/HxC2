@@ -3,8 +3,8 @@ import numpy as np
 
 class GameBoard:
     def __init__(self):
-        self.board_size_x = 7  # Largura do tabuleiro
-        self.board_size_y = 8  # Altura do tabuleiro
+        self.board_size_x = 7
+        self.board_size_y = 8
         self.board = [[None for _ in range(self.board_size_x)] for _ in range(self.board_size_y)]
         self.setup_armies()
         self.selected_piece = None
@@ -36,7 +36,7 @@ class GameBoard:
         ]
 
         start_col = (self.board_size_x - 3) // 2
-        
+
         # Posiciona Horácios (topo)
         for i, row in enumerate(formation_horatii):
             for j, piece_type in enumerate(row):
@@ -57,86 +57,82 @@ class GameBoard:
                     'color': pieces['C'][piece_type]['color']
                 }
 
-def create_board_style():
-    return """
-    <style>
-        .chess-board {
-            border: 2px solid #333;
-            padding: 5px;
-            background-color: #333;
-        }
-        .board-cell {
-            width: 60px;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-        }
-        .white-cell {
-            background-color: #EEEED2;
-        }
-        .black-cell {
-            background-color: #769656;
-        }
-        .cell-content {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-    </style>
-    """
-
 def main():
     st.title("Os Horácios e os Curiácios - Protótipo")
-    
-    # Injetar CSS personalizado
-    st.markdown(create_board_style(), unsafe_allow_html=True)
-    
+
+    # Estilos CSS para o tabuleiro
+    st.markdown("""
+        <style>
+            .board-wrapper {
+                display: flex;
+                align-items: center;
+                margin: 20px 0;
+            }
+            .board-numbers {
+                margin-right: 10px;
+                text-align: right;
+            }
+            .board-letters {
+                text-align: center;
+                margin-top: 10px;
+            }
+            .cell {
+                width: 60px;
+                height: 60px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 30px;
+            }
+            .white {
+                background-color: #f0d9b5;
+            }
+            .black {
+                background-color: #b58863;
+            }
+            .stButton button {
+                width: 100%;
+                height: 100%;
+                background: transparent;
+                border: none;
+                color: inherit;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
     if 'game_board' not in st.session_state:
         st.session_state.game_board = GameBoard()
         st.session_state.selected_pos = None
-    
+
     col1, col2 = st.columns([3, 1])
-    
+
     with col1:
-        # Criar container para o tabuleiro
-        st.markdown('<div class="chess-board">', unsafe_allow_html=True)
-        
-        # Adicionar letras no topo do tabuleiro
-        cols = st.columns(7)
-        for j in range(7):
-            with cols[j]:
-                st.markdown(f"<div style='text-align: center; color: white;'>{chr(65+j)}</div>", unsafe_allow_html=True)
-        
+        # Letras do tabuleiro (A-G)
+        letters = "ABCDEFG"
+        st.markdown('<div class="board-letters">' + 
+                   ''.join([f'<span style="display:inline-block;width:60px">{letter}</span>' 
+                           for letter in letters]) + '</div>', unsafe_allow_html=True)
+
         for i in range(8):
-            cols = st.columns(8)
+            cols = st.columns([0.2] + [1]*7)  # Uma coluna para números + 7 para o tabuleiro
+            
             # Número da linha
             with cols[0]:
-                st.markdown(f"<div style='color: white; width: 20px;'>{8-i}</div>", unsafe_allow_html=True)
+                st.markdown(f'<div style="text-align:right;padding-right:10px">{8-i}</div>', 
+                          unsafe_allow_html=True)
             
             # Células do tabuleiro
             for j in range(7):
-                with cols[j]:
-                    cell_color = 'white-cell' if (i + j) % 2 == 0 else 'black-cell'
+                with cols[j+1]:
+                    cell_color = "white" if (i + j) % 2 == 0 else "black"
                     piece = st.session_state.game_board.board[i][j]
-                    
-                    st.markdown(
-                        f"""
-                        <div class="board-cell {cell_color}">
-                            <div class="cell-content">
-                        """, 
-                        unsafe_allow_html=True
-                    )
+
+                    st.markdown(f'<div class="cell {cell_color}">', unsafe_allow_html=True)
                     
                     if piece:
-                        if st.button(
-                            piece['emoji'],
-                            key=f"cell_{i}_{j}",
-                            help=f"{'Horácio' if piece['team'] == 'H' else 'Curiácio'}"
-                        ):
+                        if st.button(piece['emoji'], 
+                                   key=f"cell_{i}_{j}",
+                                   help=f"{'Horácio' if piece['team'] == 'H' else 'Curiácio'}"):
                             if st.session_state.selected_pos is None:
                                 st.session_state.selected_pos = (i, j)
                             else:
@@ -154,10 +150,8 @@ def main():
                                 st.session_state.selected_pos = None
                                 st.rerun()
                     
-                    st.markdown("</div></div>", unsafe_allow_html=True)
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-    
+                    st.markdown('</div>', unsafe_allow_html=True)
+
     with col2:
         st.write("Legenda:")
         
@@ -181,7 +175,8 @@ def main():
             i, j = st.session_state.selected_pos
             piece = st.session_state.game_board.board[i][j]
             st.write("\nPeça selecionada:")
-            st.markdown(f"<p style='color: {piece['color']};'>{'Horácio' if piece['team'] == 'H' else 'Curiácio'} {piece['emoji']}</p>", unsafe_allow_html=True)
+            st.markdown(f"<p style='color: {piece['color']};'>{'Horácio' if piece['team'] == 'H' else 'Curiácio'} {piece['emoji']}</p>", 
+                      unsafe_allow_html=True)
             if st.button("❌ Cancelar seleção"):
                 st.session_state.selected_pos = None
                 st.rerun()
