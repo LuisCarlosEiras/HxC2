@@ -55,75 +55,75 @@ class GameBoard:
                     'color': pieces['C'][piece_type]['color']
                 }
 
-def create_board_css():
-    return """
+def create_board_html(board):
+    css = """
     <style>
-        .board {
+        .board-container {
             background: #333;
             padding: 10px;
             display: inline-block;
-            border-radius: 4px;
         }
-        .board-row {
-            display: flex;
-            align-items: center;
-            height: 60px;
+        table.chess-board {
+            border-collapse: collapse;
+            border-spacing: 0;
             margin: 0;
             padding: 0;
-            font-size: 0; /* Remove espaço entre elementos inline */
         }
-        .cell {
+        .chess-board th, .chess-board td {
             width: 60px;
             height: 60px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            margin: 0;
             padding: 0;
-            box-sizing: border-box;
+            margin: 0;
+            text-align: center;
+            vertical-align: middle;
+            border: none;
         }
-        .white {
+        .chess-board th {
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .white-cell {
             background-color: #f0d9b5;
         }
-        .black {
+        .black-cell {
             background-color: #b58863;
         }
-        .coordinate {
-            color: white;
-            width: 30px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 16px; /* Restaura o tamanho da fonte para coordenadas */
-        }
-        .stButton > button {
-            width: 60px !important;
-            height: 60px !important;
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
-            background: transparent !important;
-            border: none !important;
-            font-size: 40px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            padding: 0 !important;
-            margin: 0 !important;
-        }
-        div[data-testid="column"] {
-            padding: 0 !important;
-            margin: 0 !important;
-            font-size: 0; /* Remove espaço entre colunas */
-        }
-        /* Remove espaçamento entre linhas */
-        div[data-testid="stHorizontalBlock"] {
-            gap: 0 !important;
-            padding: 0 !important;
-            margin: 0 !important;
+        .piece-button {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 40px;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
     </style>
     """
+
+    html = css + '<div class="board-container"><table class="chess-board">'
+    
+    # Adiciona cabeçalho com letras
+    html += '<tr><th></th>'
+    for col in range(7):
+        html += f'<th>{chr(65 + col)}</th>'
+    html += '</tr>'
+    
+    # Adiciona linhas do tabuleiro
+    for row in range(8):
+        html += f'<tr><th>{8 - row}</th>'
+        for col in range(7):
+            cell_color = 'white-cell' if (row + col) % 2 == 0 else 'black-cell'
+            html += f'<td class="{cell_color}" id="cell_{row}_{col}"></td>'
+        html += '</tr>'
+    html += '</table></div>'
+    
+    return html
+
 def main():
     st.set_page_config(layout="wide")
     st.title("Os Horácios e os Curiácios - Protótipo")
@@ -132,38 +132,21 @@ def main():
         st.session_state.game_board = GameBoard()
         st.session_state.selected_pos = None
 
-    st.markdown(create_board_css(), unsafe_allow_html=True)
-
     col1, col2 = st.columns([3, 1])
 
     with col1:
-        # Início do tabuleiro
-        st.markdown('<div class="board">', unsafe_allow_html=True)
+        # Renderiza o tabuleiro base
+        st.markdown(create_board_html(st.session_state.game_board), unsafe_allow_html=True)
         
-        # Letras das colunas
-        st.markdown('<div class="board-row"><div class="coordinate"></div>' + 
-                   ''.join([f'<div class="coordinate">{chr(65+i)}</div>' for i in range(7)]) + 
-                   '</div>', unsafe_allow_html=True)
-        
-        # Criar o tabuleiro
+        # Adiciona os botões em cada célula
         for i in range(8):
-            # Início da linha
-            st.markdown(
-                f'<div class="board-row">'
-                f'<div class="coordinate">{8-i}</div>',
-                unsafe_allow_html=True
-            )
-            
-            # Células da linha
             cols = st.columns(7)
             for j, col in enumerate(cols):
                 with col:
-                    cell_color = "white" if (i + j) % 2 == 0 else "black"
-                    st.markdown(f'<div class="cell {cell_color}">', unsafe_allow_html=True)
-                    
                     piece = st.session_state.game_board.board[i][j]
                     if piece:
-                        if st.button(piece['emoji'], key=f"cell_{i}_{j}"):
+                        if st.button(piece['emoji'], key=f"cell_{i}_{j}", 
+                                   help=f"{'Horácio' if piece['team'] == 'H' else 'Curiácio'}"):
                             if st.session_state.selected_pos is None:
                                 st.session_state.selected_pos = (i, j)
                             else:
@@ -180,12 +163,6 @@ def main():
                                 st.session_state.game_board.board[old_i][old_j] = None
                                 st.session_state.selected_pos = None
                                 st.rerun()
-                    
-                    st.markdown('</div>', unsafe_allow_html=True)
-            
-            st.markdown('</div>', unsafe_allow_html=True)
-        
-        st.markdown('</div>', unsafe_allow_html=True)
 
     with col2:
         st.write("Legenda:")
@@ -214,7 +191,7 @@ def main():
             if st.button("❌ Cancelar seleção"):
                 st.session_state.selected_pos = None
                 st.rerun()
-        
+
         if st.button("🔄 Reiniciar Jogo"):
             st.session_state.game_board = GameBoard()
             st.session_state.selected_pos = None
