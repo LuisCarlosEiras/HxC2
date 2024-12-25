@@ -1,4 +1,5 @@
 import streamlit as st
+import copy
 
 class GameBoard:
     def __init__(self):
@@ -200,6 +201,21 @@ def main():
             st.session_state.game_board = GameBoard()
             st.session_state.selected_pos = None
             st.rerun()
+
+    # Adiciona um evento de clique ao botão que representa a peça
+    for i in range(8):
+        for j in range(7):
+            piece = st.session_state.game_board.board[i][j]
+            if piece:
+                st.session_state.game_board.board[i][j].on_click = lambda i=i, j=j: handle_click(i, j)
+
+def handle_click(i, j):
+    if st.session_state.selected_pos is not None:
+        old_i, old_j = st.session_state.selected_pos
+        st.session_state.game_board.board[i][j] = st.session_state.game_board.board[old_i][old_j]
+        st.session_state.game_board.board[old_i][old_j] = None
+        st.session_state.selected_pos = None
+        st.rerun()
 
 if __name__ == "__main__":
     main()
