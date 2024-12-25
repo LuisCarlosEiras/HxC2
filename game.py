@@ -33,69 +33,77 @@ class GameBoard:
             ['A', 'A', 'A']
         ]
 
-        for army, formation, start_row in [('H', formation_horatii, 0), ('C', formation_curiatii, 5)]:
-            start_col = (self.board_size_x - 3) // 2
-            for i, row in enumerate(formation):
-                for j, piece_type in enumerate(row):
-                    self.board[start_row + i][start_col + j] = {
-                        'team': army,
-                        'type': piece_type,
-                        'emoji': pieces[army][piece_type]['emoji'],
-                        'color': pieces[army][piece_type]['color']
-                    }
+        start_col = (self.board_size_x - 3) // 2
+        
+        # Posiciona Horácios (topo)
+        for i, row in enumerate(formation_horatii):
+            for j, piece_type in enumerate(row):
+                self.board[i][start_col + j] = {
+                    'team': 'H',
+                    'type': piece_type,
+                    'emoji': pieces['H'][piece_type]['emoji'],
+                    'color': pieces['H'][piece_type]['color']
+                }
+
+        # Posiciona Curiácios (base)
+        for i, row in enumerate(formation_curiatii):
+            for j, piece_type in enumerate(row):
+                self.board[5 + i][start_col + j] = {
+                    'team': 'C',
+                    'type': piece_type,
+                    'emoji': pieces['C'][piece_type]['emoji'],
+                    'color': pieces['C'][piece_type]['color']
+                }
 
 def create_board_css():
     return """
     <style>
-        .chess-board {
-            border-collapse: collapse;
+        .board {
             background: #333;
             padding: 10px;
-            margin: auto;
+            display: inline-block;
+            border-radius: 4px;
         }
-        .chess-board td {
+        .board-row {
+            display: flex;
+            align-items: center;
+        }
+        .cell {
             width: 60px;
             height: 60px;
-            text-align: center;
-            vertical-align: middle;
-            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
         }
-        .white-cell {
+        .white {
             background-color: #f0d9b5;
         }
-        .black-cell {
+        .black {
             background-color: #b58863;
         }
         .coordinate {
             color: white;
+            width: 30px;
+            text-align: center;
             font-weight: bold;
-            padding: 5px;
-        }
-        .stButton {
-            height: 60px;
-            width: 60px;
-            padding: 0 !important;
-            margin: 0 !important;
         }
         .stButton > button {
-            width: 100% !important;
-            height: 100% !important;
-            padding: 0 !important;
-            border: none !important;
+            width: 60px !important;
+            height: 60px !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
             background: transparent !important;
-            font-size: 35px !important;
+            border: none !important;
+            font-size: 40px !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
+            padding: 0 !important;
         }
         div[data-testid="column"] {
             padding: 0 !important;
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-        }
-        td {
-            position: relative;
         }
     </style>
     """
@@ -113,29 +121,29 @@ def main():
     col1, col2 = st.columns([3, 1])
 
     with col1:
-        # Criar o tabuleiro como uma tabela HTML
-        table_html = '<table class="chess-board"><tr><td></td>'
+        # Início do tabuleiro
+        st.markdown('<div class="board">', unsafe_allow_html=True)
         
-        # Adicionar letras das colunas
-        for j in range(7):
-            table_html += f'<td class="coordinate">{chr(65+j)}</td>'
-        table_html += '</tr>'
+        # Letras das colunas
+        st.markdown('<div class="board-row"><div class="coordinate"></div>' + 
+                   ''.join([f'<div class="coordinate">{chr(65+i)}</div>' for i in range(7)]) + 
+                   '</div>', unsafe_allow_html=True)
         
-        st.markdown(table_html, unsafe_allow_html=True)
-
-        # Criar o tabuleiro linha por linha
+        # Criar o tabuleiro
         for i in range(8):
-            cols = st.columns([0.5] + [1]*7)
+            # Início da linha
+            st.markdown(
+                f'<div class="board-row">'
+                f'<div class="coordinate">{8-i}</div>',
+                unsafe_allow_html=True
+            )
             
-            # Número da linha
-            with cols[0]:
-                st.markdown(f'<div class="coordinate">{8-i}</div>', unsafe_allow_html=True)
-            
-            # Células do tabuleiro
-            for j in range(7):
-                with cols[j+1]:
-                    cell_color = "white-cell" if (i + j) % 2 == 0 else "black-cell"
-                    st.markdown(f'<div class="{cell_color}">', unsafe_allow_html=True)
+            # Células da linha
+            cols = st.columns(7)
+            for j, col in enumerate(cols):
+                with col:
+                    cell_color = "white" if (i + j) % 2 == 0 else "black"
+                    st.markdown(f'<div class="cell {cell_color}">', unsafe_allow_html=True)
                     
                     piece = st.session_state.game_board.board[i][j]
                     if piece:
@@ -158,6 +166,10 @@ def main():
                                 st.rerun()
                     
                     st.markdown('</div>', unsafe_allow_html=True)
+            
+            st.markdown('</div>', unsafe_allow_html=True)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
 
     with col2:
         st.write("Legenda:")
