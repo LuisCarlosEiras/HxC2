@@ -84,10 +84,10 @@ def main():
     img = game_board.draw_board()
 
     # Show the image in Streamlit
-    st.image(img, caption=None, use_column_width=True)
+    st.image(img, caption=None, use_container_width=True)  # Corrigido: use_container_width em vez de use_column_width
 
-    # Handle clicks
-    click_info = st.experimental_query_params()
+    # Handle clicks usando st.query_params em vez de st.experimental_get_query_params
+    click_info = st.query_params
     if 'click_pos' in click_info:
         row, col = map(int, click_info['click_pos'][0].split(','))
         if st.session_state['selected_pos'] is None:
@@ -98,7 +98,7 @@ def main():
             st.session_state['game_board'].board[old_row][old_col] = None
             st.session_state['selected_pos'] = None
             del click_info['click_pos']
-            st.experimental_rerun()
+            st.rerun()  # Usando st.rerun() em vez de st.experimental_rerun()
 
     # Display legend
     st.write("Legenda:")
@@ -127,7 +127,7 @@ def main():
     if st.button("🔄 Reiniciar Jogo"):
         st.session_state['game_board'] = GameBoard()
         st.session_state['selected_pos'] = None
-        st.experimental_rerun()
+        st.rerun()  # Usando st.rerun() em vez de st.experimental_rerun()
 
 if __name__ == "__main__":
     main()
