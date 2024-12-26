@@ -1,6 +1,5 @@
 import streamlit as st
-import numpy as np
-import cv2
+from PIL import Image, ImageDraw, ImageFont
 
 class GameBoard:
     def __init__(self):
@@ -12,14 +11,14 @@ class GameBoard:
     def setup_armies(self):
         pieces = {
             'H': {  # Horácios (azul)
-                'S': {'emoji': '⚔️', 'color': '#0000FF'},
-                'L': {'emoji': '🗡️', 'color': '#0000FF'},
-                'A': {'emoji': '🏹', 'color': '#0000FF'}
+                'S': {'emoji': '⚔️', 'color': 'blue'},
+                'L': {'emoji': '🗡️', 'color': 'blue'},
+                'A': {'emoji': '🏹', 'color': 'blue'}
             },
             'C': {  # Curiácios (vermelho)
-                'S': {'emoji': '⚔️', 'color': '#FF0000'},
-                'L': {'emoji': '🗡️', 'color': '#FF0000'},
-                'A': {'emoji': '🏹', 'color': '#FF0000'}
+                'S': {'emoji': '⚔️', 'color': 'red'},
+                'L': {'emoji': '🗡️', 'color': 'red'},
+                'A': {'emoji': '🏹', 'color': 'red'}
             }
         }
 
@@ -58,23 +57,20 @@ class GameBoard:
                 }
 
     def draw_board(self):
-        img = np.zeros((480, 420, 3), dtype=np.uint8)
-        img.fill(255)
-        for i in range(8):
-            for j in range(7):
+        cell_size = 60
+        board_img = Image.new('RGB', (self.board_size_x * cell_size, self.board_size_y * cell_size), (255, 255, 255))
+        draw = ImageDraw.Draw(board_img)
+
+        for i in range(self.board_size_y):
+            for j in range(self.board_size_x):
                 color = (240, 217, 181) if (i + j) % 2 == 0 else (181, 136, 99)
-                cv2.rectangle(img, (j * 60, i * 60), ((j + 1) * 60, (i + 1) * 60), color, -1)
+                draw.rectangle([j * cell_size, i * cell_size, (j + 1) * cell_size, (i + 1) * cell_size], fill=color)
                 piece = self.board[i][j]
                 if piece:
-                    cv2.putText(img, piece['emoji'], (j * 60 + 15, i * 60 + 45), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
-        return img
+                    font = ImageFont.load_default()
+                    draw.text((j * cell_size + 20, i * cell_size + 20), piece['emoji'], fill=piece['color'], font=font)
 
-def click_event(event, x, y, flags, params):
-    if event == cv2.EVENT_LBUTTONDOWN:
-        col = x // 60
-        row = y // 60
-        if 0 <= col < 7 and 0 <= row < 8:
-            st.session_state['click_pos'] = (row, col)
+        return board_img
 
 def main():
     st.set_page_config(layout="wide")
@@ -90,13 +86,10 @@ def main():
     # Show the image in Streamlit
     st.image(img, caption=None, use_column_width=True)
 
-    # Bind the click event
-    cv2.namedWindow('Board')
-    cv2.setMouseCallback('Board', click_event)
-
     # Handle clicks
-    if 'click_pos' in st.session_state:
-        row, col = st.session_state['click_pos']
+    click_info = st.experimental_get_query_params()
+    if 'click_pos' in click_info:
+        row, col = map(int, click_info['click_pos'][0].split(','))
         if st.session_state['selected_pos'] is None:
             st.session_state['selected_pos'] = (row, col)
         else:
@@ -104,17 +97,17 @@ def main():
             st.session_state['game_board'].board[row][col] = st.session_state['game_board'].board[old_row][old_col]
             st.session_state['game_board'].board[old_row][old_col] = None
             st.session_state['selected_pos'] = None
-            del st.session_state['click_pos']
+            del click_info['click_pos']
             st.experimental_rerun()
 
     # Display legend
     st.write("Legenda:")
-    st.markdown("<div style='color: #0000FF;'>Horácios:</div>", unsafe_allow_html=True)
+    st.markdown("<div style='color: blue;'>Horácios:</div>", unsafe_allow_html=True)
     st.write("⚔️ - Espadachim")
     st.write("🗡️ - Lanceiro")
     st.write("🏹 - Arqueiro")
     st.write("")
-    st.markdown("<div style='color: #FF0000;'>Curiácios:</div>", unsafe_allow_html=True)
+    st.markdown("<div style='color: red;'>Curiácios:</div>", unsafe_allow_html=True)
     st.write("⚔️ - Espadachim")
     st.write("🗡️ - Lanceiro")
     st.write("🏹 - Arqueiro")
