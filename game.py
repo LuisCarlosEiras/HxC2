@@ -87,7 +87,7 @@ def main():
     st.image(img, caption=None, use_column_width=True)
 
     # Handle clicks
-    click_info = st.experimental_get_query_params()
+    click_info = st.experimental_query_params()
     if 'click_pos' in click_info:
         row, col = map(int, click_info['click_pos'][0].split(','))
         if st.session_state['selected_pos'] is None:
