@@ -63,11 +63,13 @@ def create_board_html(board):
             padding: 5px;
             background: #333;
             border-radius: 4px;
+            margin: auto;
+            text-align: center;
         }
         table.chess-board {
             border-collapse: collapse;
             border-spacing: 0;
-            margin: 0;
+            margin: 0 auto;
             padding: 0;
         }
         .chess-board th, .chess-board td {
@@ -96,6 +98,15 @@ def create_board_html(board):
             margin: 0;
             padding: 0;
         }
+        .button-cell {
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            margin: 0;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+        }
     </style>
     """
 
@@ -113,18 +124,8 @@ def create_board_html(board):
         for col in range(7):
             cell_color = 'white-cell' if (row + col) % 2 == 0 else 'black-cell'
             piece = board[row][col]
-            if piece:
-                piece_html = f'<div class="piece" style="color: {piece["color"]};">{piece["emoji"]}</div>'
-            else:
-                piece_html = ''
-            key = f'cell_{row}_{col}'
-            html += f'''
-                <td class="{cell_color}">
-                    <button key="{key}" style="width:100%;height:100%;border:none;background:none;cursor:pointer;">
-                        {piece_html}
-                    </button>
-                </td>
-            '''
+            piece_html = f'<div class="piece" style="color: {piece["color"]};">{piece["emoji"]}</div>' if piece else ''
+            html += f'<td class="{cell_color}">{piece_html}</td>'
         html += '</tr>'
     html += '</table></div>'
     
@@ -138,25 +139,22 @@ def main():
         st.session_state.game_board = GameBoard()
         st.session_state.selected_pos = None
 
-    col1, col2 = st.columns([2, 1])  # Ajustado para diminuir o espaço do tabuleiro
+    col1, col2 = st.columns([2, 1])
 
     with col1:
         # Renderiza o tabuleiro
         st.markdown(create_board_html(st.session_state.game_board.board), unsafe_allow_html=True)
         
-        # Matriz de botões para controle
+        # Matriz de botões invisíveis para controle
         cols = st.columns(7)
         for i in range(8):
             for j in range(7):
-                piece = st.session_state.game_board.board[i][j]
                 with cols[j]:
                     if st.button("", key=f"btn_{i}_{j}", help=f"Posição {chr(65+j)}{8-i}"):
-                        if st.session_state.selected_pos is None:
-                            if piece is not None:  # Só seleciona se tiver peça
-                                st.session_state.selected_pos = (i, j)
-                        else:
+                        if st.session_state.selected_pos is None and st.session_state.game_board.board[i][j]:
+                            st.session_state.selected_pos = (i, j)
+                        elif st.session_state.selected_pos is not None:
                             old_i, old_j = st.session_state.selected_pos
-                            # Move a peça
                             st.session_state.game_board.board[i][j] = st.session_state.game_board.board[old_i][old_j]
                             st.session_state.game_board.board[old_i][old_j] = None
                             st.session_state.selected_pos = None
@@ -164,7 +162,6 @@ def main():
 
     with col2:
         st.write("Legenda:")
-        
         st.markdown("<div style='color: blue;'>Horácios:</div>", unsafe_allow_html=True)
         st.write("⚔️ - Espadachim")
         st.write("🗡️ - Lanceiro")
