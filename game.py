@@ -98,15 +98,6 @@ def create_board_html(board):
             margin: 0;
             padding: 0;
         }
-        .button-cell {
-            width: 40px;
-            height: 40px;
-            padding: 0;
-            margin: 0;
-            border: none;
-            background: transparent;
-            cursor: pointer;
-        }
     </style>
     """
 
@@ -145,16 +136,23 @@ def main():
         # Renderiza o tabuleiro
         st.markdown(create_board_html(st.session_state.game_board.board), unsafe_allow_html=True)
         
-        # Matriz de botões invisíveis para controle
-        cols = st.columns(7)
+        # Interface de movimentação
+        st.write("Controles de Movimentação:")
+        
+        # Cria uma matriz de botões 8x7 para controle
         for i in range(8):
-            for j in range(7):
-                with cols[j]:
-                    if st.button("", key=f"btn_{i}_{j}", help=f"Posição {chr(65+j)}{8-i}"):
-                        if st.session_state.selected_pos is None and st.session_state.game_board.board[i][j]:
-                            st.session_state.selected_pos = (i, j)
-                        elif st.session_state.selected_pos is not None:
+            cols = st.columns(7)
+            for j, col in enumerate(cols):
+                with col:
+                    piece = st.session_state.game_board.board[i][j]
+                    label = piece['emoji'] if piece else " "
+                    if st.button(label, key=f"btn_{i}_{j}", help=f"Posição {chr(65+j)}{8-i}"):
+                        if st.session_state.selected_pos is None:
+                            if piece is not None:  # Só seleciona se tiver peça
+                                st.session_state.selected_pos = (i, j)
+                        else:
                             old_i, old_j = st.session_state.selected_pos
+                            # Move a peça
                             st.session_state.game_board.board[i][j] = st.session_state.game_board.board[old_i][old_j]
                             st.session_state.game_board.board[old_i][old_j] = None
                             st.session_state.selected_pos = None
@@ -162,6 +160,7 @@ def main():
 
     with col2:
         st.write("Legenda:")
+        
         st.markdown("<div style='color: blue;'>Horácios:</div>", unsafe_allow_html=True)
         st.write("⚔️ - Espadachim")
         st.write("🗡️ - Lanceiro")
